@@ -8,7 +8,7 @@
         </div>
         <div class="modal-body">
           <div class="text-center mb-4">
-            <img src="../assets/images/npc-logo.png" alt="N.P.C. Logo" style="width: 150px;" />
+            <img src="../assets/images/npc-logo.png" alt="N.P.C. Logo" class="w-50" />
           </div>
           
           <slot></slot>
