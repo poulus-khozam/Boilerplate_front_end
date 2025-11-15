@@ -15,7 +15,7 @@
         placeholder="Enter Password"
         required
       />
-      <BaseButton type="submit">Login</BaseButton>
+      <BaseButton type="submit" class="w-100">Login</BaseButton>
     </form>
     <template #footer>
       <BaseButton variant="danger" @click="handleCancel">Cancel</BaseButton>
@@ -53,5 +53,3 @@ const handleCancel = () => {
   error.value = null;
 };
 </script>
-
-<!-- The <style> block is no longer needed here -->

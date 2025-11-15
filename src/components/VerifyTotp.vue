@@ -8,9 +8,10 @@
         placeholder="Enter 6-digit code"
         maxlength="6"
         required
-        style="text-align: center; letter-spacing: 0.5em;"
+        class="text-center"
+        style="letter-spacing: 0.5em;"
       />
-      <BaseButton type="submit">Verify</BaseButton>
+      <BaseButton type="submit" class="w-100">Verify</BaseButton>
     </form>
     <template #footer>
       <BaseButton variant="secondary" @click="goBack">Back</BaseButton>
@@ -45,5 +46,3 @@ const goBack = () => {
   router.push({ name: 'Login' });
 };
 </script>
-
-<!-- The <style> block is no longer needed here -->

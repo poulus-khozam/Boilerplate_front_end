@@ -1,18 +1,31 @@
 <template>
-  <button :class="['base-button', variant]" v-bind="$attrs">
+  <button :class="buttonClass" v-bind="$attrs">
     <slot></slot>
   </button>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue';
+
+const props = defineProps({
   variant: {
     type: String,
-    default: '' // e.g., 'secondary', 'danger'
+    default: 'primary' // Default to primary
   }
 });
-</script>
 
-<style scoped>
-/* Scoped styles can be added here if needed, but globals handle the base */
-</style>
+const buttonClass = computed(() => {
+  // Maps variant prop to Bootstrap button classes
+  const variantMap = {
+    primary: 'btn-primary',
+    secondary: 'btn-secondary',
+    danger: 'btn-danger',
+    success: 'btn-success',
+    warning: 'btn-warning',
+    info: 'btn-info',
+    light: 'btn-light',
+    dark: 'btn-dark'
+  };
+  return ['btn', variantMap[props.variant] || 'btn-primary'];
+});
+</script>

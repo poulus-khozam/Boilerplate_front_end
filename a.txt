@@ -2,7 +2,7 @@ docker stop front-end-container-no-nginx;docker rm front-end-container-no-nginx;
 
 
 
-find . -type f -not -path '*/.git/*' -not -name '.env' -not -name 'all_files_content.txt' -not -name 'npc-logo.png' -print0 | while IFS= read -r -d '' file; do
+find . -type f -not -path '*/.git/*' -not -name '.env' -not -name 'all_files_content.txt'  -not -name 'a.txt' -not -name 'npc-logo.png' -print0 | while IFS= read -r -d '' file; do
     if ! git check-ignore --quiet "$file"; then
         echo "file: ${file}"
         cat "${file}"
@@ -11,5 +11,4 @@ find . -type f -not -path '*/.git/*' -not -name '.env' -not -name 'all_files_con
         echo
     fi
 done > all_files_content.txt
-
 

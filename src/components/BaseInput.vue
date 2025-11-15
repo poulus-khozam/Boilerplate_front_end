@@ -1,8 +1,8 @@
 <template>
-  <div class="form-group">
-    <label v-if="label" :for="uuid">{{ label }}</label>
+  <div class="mb-3">
+    <label v-if="label" :for="uuid" class="form-label">{{ label }}</label>
     <input
-      class="base-input"
+      class="form-control"
       :value="modelValue"
       @input="$emit('update:modelValue', $event.target.value)"
       :id="uuid"
@@ -32,6 +32,4 @@ defineEmits(['update:modelValue']);
 const uuid = computed(() => 'input-' + Math.random().toString(36).substring(2, 9));
 </script>
 
-<style scoped>
-/* Scoped styles can be added here for variations if needed */
-</style>
+ 
