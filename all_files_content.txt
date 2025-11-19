@@ -100,6 +100,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../components/Login.vue'
 import VerifyTotp from '../components/VerifyTotp.vue'
 import Welcome from '../views/Welcome.vue'
+import About from '../views/About.vue'
+import Home from '../views/Home.vue' // <-- 1. IMPORT HOME
 import { useAuthStore } from '../stores/auth'
 
 const routes = [
@@ -121,6 +123,7 @@ const routes = [
       }
     }
   },
+  // v-- 2. MODIFY THIS ENTIRE ROUTE OBJECT --v
   {
     path: '/welcome',
     name: 'Welcome',
@@ -132,8 +135,22 @@ const routes = [
       } else {
         next({ name: 'Login' })
       }
-    }
+    },
+    // Add children for nested routing
+    children: [
+      {
+        path: '', // Default child route for /welcome
+        name: 'WelcomeHome',
+        component: Home
+      },
+      {
+        path: 'about', // Child route for /welcome/about
+        name: 'About',
+        component: About
+      }
+    ]
   }
+  // ^-- THE 'ABOUT' ROUTE IS NOW NESTED INSIDE --^
 ]
 
 const router = createRouter({
@@ -142,11 +159,12 @@ const router = createRouter({
 })
 
 export default router
-
 ---END-OF-FILE---
 
 file: ./src/services/authService.js
 import axios from 'axios'
+import { useAuthStore } from '../stores/auth' // Import the store to get the token
+
 
 const API_URL = 'http://0.0.0.0:5000'
 
@@ -168,55 +186,176 @@ class AuthService {
       totp_code: totpCode
     })
   }
+
+  changePassword(passwords) {
+    const auth = useAuthStore()
+    const token = auth.accessToken
+
+    // Make sure you have a token before making the request
+    if (!token) {
+      return Promise.reject('No access token found.')
+    }
+
+    return axios.post(`${API_URL}/change-password`, {
+      old_password: passwords.oldPassword,
+      new_password: passwords.newPassword
+    }, {
+      headers: {
+        // This is crucial for the server to know who you are
+        'Authorization': `Bearer ${token}`
+      }
+    })
+  }
 }
 
 export default new AuthService()
 
 ---END-OF-FILE---
 
+file: ./src/views/About.vue
+<template>
+  <div class="container mt-5">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h3>About NPC Users App</h3>
+      </div>
+      <div class="card-body">
+        <p class="card-text">
+          This application is the front-end interface for the NPC user management system.
+        </p>
+        <p class="card-text">
+          <strong>Version:</strong> 1.0.0
+        </p>
+        <router-link to="/welcome" class="btn btn-primary">Back to Welcome Page</router-link>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+// No script logic needed for this simple static page
+</script>
+
+<style scoped>
+.card {
+  max-width: 600px;
+  margin: 0 auto;
+}
+</style>
+---END-OF-FILE---
+
+file: ./src/views/Home.vue
+<template>
+  <div class="text-center">
+    <p>Welcome to the main page.</p>
+  </div>
+</template>
+
+<script setup>
+// This script block is intentionally left empty,
+// but it is required for the component to be valid.
+</script>
+---END-OF-FILE---
+
 file: ./src/views/Welcome.vue
 <template>
-  <div class="welcome-container w-100">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom shadow-sm mb-4">
-      <div class="container-fluid">
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <a class="navbar-brand mx-auto" href="#">شركه النصر للبترول</a>
-        <div class="d-flex">
-           <a href="#" @click.prevent="handleLogout" class="text-secondary" title="Logout">
-              <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
-              </svg>
-           </a>
+  <!-- The ChangePassword modal will be rendered on top of everything when active -->
+  <ChangePassword v-if="showChangePasswordModal" @close="toggleChangePasswordModal" />
+
+  <div class="welcome-container w-100 vh-100">
+    <nav class="navbar navbar-expand-lg navbar-light border-bottom shadow-sm">
+      <div class="container-fluid d-flex justify-content-between align-items-center">
+        <!-- Company Logo on the left -->
+        <a class="navbar-brand" href="#">
+          <img :src="npcLogo" alt="NPC Logo" style="height: 40px;">
+        </a>
+
+        <!-- Dropdown Menu on the right -->
+        <div class="dropdown">
+          <a href="#" role="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+            <img 
+              v-if="employeeImageUrl" 
+              :src="employeeImageUrl" 
+              class="rounded-circle" 
+              alt="Employee Picture" 
+              style="height: 40px; width: 40px; object-fit: cover; cursor: pointer;"
+              @error="onImageError"
+            >
+            <img
+              v-else
+              src="@/assets/images/default-avatar.png"
+              class="rounded-circle"
+              alt="Default Avatar"
+              style="height: 40px; width: 40px; object-fit: cover; cursor: pointer;"
+            >
+          </a>
+
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+            <!-- Use router-link for navigation -->
+            <li><router-link :to="{ name: 'About' }" class="dropdown-item">About</router-link></li>
+            <li><a class="dropdown-item" href="#" @click.prevent="toggleChangePasswordModal">Change Password</a></li>
+            <li><a class="dropdown-item" href="#">Settings</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" @click.prevent="handleLogout">Logout</a></li>
+          </ul>
         </div>
       </div>
     </nav>
-    <main class="container">
-      <div class="text-center">
-        <p>Welcome to the main page.</p>
-      </div>
+    <main class="container mt-4">
+      <!-- THIS IS THE CRITICAL PART -->
+      <!-- It will now render Home.vue or About.vue based on the URL -->
+      <router-view />
     </main>
   </div>
 </template>
 
 <script setup>
+import { ref, computed } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
+import npcLogo from '@/assets/images/npc-logo.png';
+import ChangePassword from '@/components/ChangePassword.vue';
 
 const auth = useAuthStore();
 const router = useRouter();
+const imageHasError = ref(false);
+const showChangePasswordModal = ref(false);
+
+const employeeImageUrl = computed(() => {
+  if (imageHasError.value || !auth.username) {
+    return null;
+  }
+  return `https://mynpc.nasroil.com/emp/pic_2025_9/${auth.username}.jpg`;
+});
+
+const onImageError = () => {
+  imageHasError.value = true;
+};
+
+const toggleChangePasswordModal = () => {
+  showChangePasswordModal.value = !showChangePasswordModal.value;
+};
 
 const handleLogout = () => {
-  // Clear any authentication tokens and user state
   auth.logout();
-  // Redirect to the login page
   router.push({ name: 'Login' });
 };
 </script>
 
+<style scoped>
+.navbar {
+  background-image: linear-gradient(to right, #e0f7fa, #b2ebf2);
+}
+
+.welcome-container {
+  display: flex;
+  flex-direction: column;
+}
+
+main.container {
+  flex-grow: 1;
+}
+</style>
 ---END-OF-FILE---
 
 file: ./src/stores/auth.js
@@ -227,6 +366,7 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     loginToken: null,
     accessToken: null,
+    username: null, 
     error: null
   }),
   persist: true, // Enable persistence for this store
@@ -252,6 +392,17 @@ export const useAuthStore = defineStore('auth', {
       try {
         const response = await AuthService.verifyTotp(this.loginToken, totpCode)
         this.accessToken = response.data.access_token
+        
+        // Decode JWT payload to get username <-- START OF ADDED CODE
+        try {
+          const payload = JSON.parse(atob(this.accessToken.split('.')[1]));
+          // Assuming the username/ID is in the 'sub' (subject) claim of the JWT
+          this.username = payload.sub; 
+        } catch (e) {
+          console.error("Failed to decode access token:", e);
+          this.username = null;
+        } // <-- END OF ADDED CODE
+
         this.loginToken = null
         this.error = null
         return true
@@ -263,10 +414,12 @@ export const useAuthStore = defineStore('auth', {
     logout() {
       this.loginToken = null
       this.accessToken = null
+      this.username = null // <-- ADD THIS LINE
     }
   }
 })
 
+  
 ---END-OF-FILE---
 
 file: ./src/main.js
@@ -294,6 +447,104 @@ file: ./src/App.vue
     <router-view />
   </div>
 </template>
+---END-OF-FILE---
+
+file: ./src/components/ChangePassword.vue
+<template>
+  <div class="modal fade show" tabindex="-1" style="display: block;" aria-modal="true" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Change Password</h5>
+          <button type="button" class="btn-close" @click="$emit('close')" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div v-if="error" class="alert alert-danger">{{ error }}</div>
+          <div v-if="success" class="alert alert-success">{{ success }}</div>
+          
+          <form @submit.prevent="handleChangePassword">
+            <BaseInput
+              v-model="oldPassword"
+              label="Old Password"
+              type="password"
+              placeholder="Enter your current password"
+              required
+            />
+            <BaseInput
+              v-model="newPassword"
+              label="New Password"
+              type="password"
+              placeholder="Enter your new password"
+              required
+            />
+            <BaseInput
+              v-model="confirmPassword"
+              label="Confirm New Password"
+              type="password"
+              placeholder="Confirm your new password"
+              required
+            />
+            <BaseButton type="submit" class="w-100">Update Password</BaseButton>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <BaseButton variant="secondary" @click="$emit('close')">Close</BaseButton>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import BaseInput from './BaseInput.vue';
+import BaseButton from './BaseButton.vue';
+import AuthService from '../services/authService'; // <-- 1. IMPORT THE SERVICE
+
+
+// Define emits to communicate with the parent component
+defineEmits(['close']);
+
+const oldPassword = ref('');
+const newPassword = ref('');
+const confirmPassword = ref('');
+const error = ref(null);
+const success = ref(null);
+
+const handleChangePassword = async () => {
+  error.value = null;
+  success.value = null;
+
+  if (newPassword.value !== confirmPassword.value) {
+    error.value = "New passwords do not match.";
+    return;
+  }
+
+  try {
+    const response = await AuthService.changePassword({
+      oldPassword: oldPassword.value,
+      newPassword: newPassword.value
+    });
+    
+    // Assuming the server returns a success message
+    success.value = response.data.message || "Password updated successfully!";
+    
+    // Clear the form fields on success
+    oldPassword.value = '';
+    newPassword.value = '';
+    confirmPassword.value = '';
+
+  } catch (err) {
+    // Display the error message from the server's response
+    if (err.response && err.response.data && err.response.data.detail) {
+      error.value = err.response.data.detail;
+    } else {
+      error.value = 'An unexpected error occurred. Please try again.';
+    }
+  }
+}; 
+</script>
 ---END-OF-FILE---
 
 file: ./src/components/BaseInput.vue

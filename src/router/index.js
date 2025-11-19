@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../components/Login.vue'
 import VerifyTotp from '../components/VerifyTotp.vue'
 import Welcome from '../views/Welcome.vue'
+import About from '../views/About.vue'
+import Home from '../views/Home.vue' // <-- 1. IMPORT HOME
 import { useAuthStore } from '../stores/auth'
 
 const routes = [
@@ -23,6 +25,7 @@ const routes = [
       }
     }
   },
+  // v-- 2. MODIFY THIS ENTIRE ROUTE OBJECT --v
   {
     path: '/welcome',
     name: 'Welcome',
@@ -34,8 +37,22 @@ const routes = [
       } else {
         next({ name: 'Login' })
       }
-    }
+    },
+    // Add children for nested routing
+    children: [
+      {
+        path: '', // Default child route for /welcome
+        name: 'WelcomeHome',
+        component: Home
+      },
+      {
+        path: 'about', // Child route for /welcome/about
+        name: 'About',
+        component: About
+      }
+    ]
   }
+  // ^-- THE 'ABOUT' ROUTE IS NOW NESTED INSIDE --^
 ]
 
 const router = createRouter({

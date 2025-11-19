@@ -1,6 +1,9 @@
 <template>
+  <!-- The ChangePassword modal will be rendered on top of everything when active -->
+  <ChangePassword v-if="showChangePasswordModal" @close="toggleChangePasswordModal" />
+
   <div class="welcome-container w-100 vh-100">
-    <nav class="navbar navbar-expand-lg navbar-light border-bottom shadow-sm" style="background: linear-gradient(to right, white , #0dd6fd ); ">
+    <nav class="navbar navbar-expand-lg navbar-light border-bottom shadow-sm">
       <div class="container-fluid d-flex justify-content-between align-items-center">
         <!-- Company Logo on the left -->
         <a class="navbar-brand" href="#">
@@ -9,7 +12,6 @@
 
         <!-- Dropdown Menu on the right -->
         <div class="dropdown">
-          <!-- Employee Picture as dropdown toggle -->
           <a href="#" role="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
             <img 
               v-if="employeeImageUrl" 
@@ -19,7 +21,6 @@
               style="height: 40px; width: 40px; object-fit: cover; cursor: pointer;"
               @error="onImageError"
             >
-            <!-- Fallback Icon: Displayed if the image fails to load -->
             <img
               v-else
               src="@/assets/images/default-avatar.png"
@@ -29,11 +30,11 @@
             >
           </a>
 
-          <!-- Dropdown Menu -->
           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-            <li><a class="dropdown-item" href="#">About</a></li>
-            <li><a class="dropdown-item" href="#">Change Password</a></li>
-            <li><a class="dropdown-item" href="#">Settings</a></li> 
+            <!-- Use router-link for navigation -->
+            <li><router-link :to="{ name: 'About' }" class="dropdown-item">About</router-link></li>
+            <li><a class="dropdown-item" href="#" @click.prevent="toggleChangePasswordModal">Change Password</a></li>
+            <li><a class="dropdown-item" href="#">Settings</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="#" @click.prevent="handleLogout">Logout</a></li>
           </ul>
@@ -41,9 +42,9 @@
       </div>
     </nav>
     <main class="container mt-4">
-      <div class="text-center">
-        <p>Welcome to the main page.</p>
-      </div>
+      <!-- THIS IS THE CRITICAL PART -->
+      <!-- It will now render Home.vue or About.vue based on the URL -->
+      <router-view />
     </main>
   </div>
 </template>
@@ -53,23 +54,26 @@ import { ref, computed } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
 import npcLogo from '@/assets/images/npc-logo.png';
+import ChangePassword from '@/components/ChangePassword.vue';
 
 const auth = useAuthStore();
 const router = useRouter();
-const imageHasError = ref(false); // State to track if the employee image failed to load
+const imageHasError = ref(false);
+const showChangePasswordModal = ref(false);
 
-// A computed property to decide which image URL to use
 const employeeImageUrl = computed(() => {
   if (imageHasError.value || !auth.username) {
-    // If there was an error or no username, return null to trigger the fallback
     return null;
   }
   return `https://mynpc.nasroil.com/emp/pic_2025_9/${auth.username}.jpg`;
 });
 
-// This function is called if the employee image fails to load (e.g., 404 Not Found)
 const onImageError = () => {
   imageHasError.value = true;
+};
+
+const toggleChangePasswordModal = () => {
+  showChangePasswordModal.value = !showChangePasswordModal.value;
 };
 
 const handleLogout = () => {
@@ -79,13 +83,15 @@ const handleLogout = () => {
 </script>
 
 <style scoped>
-/* Ensure the container uses the full height and lays out content vertically */
+.navbar {
+  background-image: linear-gradient(to right, #e0f7fa, #b2ebf2);
+}
+
 .welcome-container {
   display: flex;
   flex-direction: column;
 }
 
-/* Allow the main content area to grow */
 main.container {
   flex-grow: 1;
 }
